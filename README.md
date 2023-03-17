@@ -4,7 +4,7 @@
 
 A cli tool written in go for project templating, scaffolding, and text-replacement
 * [Install](#install)
-* [Use](#use)
+* [Usage](#usage)
 * [Examples](#examples)
   * [A basic use case](#a-basic-use-case)
   * [Render by piping template and providing input directly](#render-by-piping-template-and-providing-input-directly)
@@ -39,7 +39,7 @@ wget https://github.com/timharris777/go-spawn/releases/latest/download/go-spawn-
 
 Go to `https://github.com/timharris777/go-spawn/releases/latest` and download the appropriate `exe` file.
 
-## Use
+## Usage
 
 ```
 A cli tool written in go for project templating, scaffolding, and text-replacement
