@@ -41,7 +41,7 @@ Go to `https://github.com/timharris777/go-spawn/releases/latest` and download th
 
 ## Use
 
-```sh
+```
 A cli tool written in go for project templating, scaffolding, and text-replacement
 
 Usage:
