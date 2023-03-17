@@ -1,6 +1,0 @@
-030bae0607229e324493bcd994e8c2a57d311df956d51fc2af80e58e5c0bfb43  go-spawn-windows-arm64_0.0.0-SNAPSHOT-219e9bb_windows_arm64.exe
-4c490b8e4edba2af7595f9ee897cec3ee498fa5926b133ce7aa8d6a3f142d4ef  go-spawn-linux-arm64_0.0.0-SNAPSHOT-219e9bb_linux_arm64
-81cf9dd0fca0349bb4505ccfb29ceb150a90de85929c9bfde74c6f3c5cc1a4e7  go-spawn-darwin-amd64_0.0.0-SNAPSHOT-219e9bb_darwin_amd64
-b9fe47c5f0516a4d6089a86fbf99c45bcce788030a376a894811cf95d8475521  go-spawn-linux-amd64_0.0.0-SNAPSHOT-219e9bb_linux_amd64
-bf3c037f53253e8ae22590db3eb95ca9371b0374eda30c2e8e1a0ef8c3701bbd  go-spawn-windows-amd64_0.0.0-SNAPSHOT-219e9bb_windows_amd64.exe
-f7b9d93fc83b98a6e79fee6e81cdacf56f599b6b3e77ceecf0cfd8462a482e84  go-spawn-darwin-arm64_0.0.0-SNAPSHOT-219e9bb_darwin_arm64
