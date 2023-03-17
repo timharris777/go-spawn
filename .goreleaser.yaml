@@ -1,0 +1,21 @@
+project_name: go-spawn
+builds:
+  - id: all
+    binary: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+    env: [CGO_ENABLED=0]
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - >
+        -s -w -X github.com/timharris777/go-spawn/internal/version.version={{.Version}} 
+        -X github.com/timharris777/go-spawn/internal/version.commit={{.Commit}} 
+        -X github.com/timharris777/go-spawn/internal/version.date={{.Date}} 
+        -X github.com/timharris777/go-spawn/internal/version.builtBy=goreleaser
+    no_unique_dist_dir: true
+archives:
+- format: binary # disable archives
