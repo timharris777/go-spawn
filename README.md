@@ -4,6 +4,13 @@
 
 A cli tool written in go for project templating, scaffolding, and text-replacement
 * [Install](#install)
+  * [Mac](#mac)
+    * [Intel](#intel)
+    * [Arm](#arm)
+* [Linux](#linux)
+    * [x64](#x64)
+    * [Arm](#arm-1)
+* [Windows](#windows)
 * [Use](#use)
 * [Examples](#examples)
   * [A basic use case](#a-basic-use-case)
@@ -13,7 +20,31 @@ A cli tool written in go for project templating, scaffolding, and text-replaceme
 
 ## Install
 
-Coming soon...
+### Mac
+
+#### Intel
+```sh
+wget https://github.com/timharris777/go-spawn/releases/latest/download/go-spawn-darwin-amd64 -O /usr/local/bin/go-spawn && chmod +x /usr/local/bin/go-spawn
+```
+#### Arm
+```sh
+wget https://github.com/timharris777/go-spawn/releases/latest/download/go-spawn-darwin-arm64 -O /usr/local/bin/go-spawn && chmod +x /usr/local/bin/go-spawn
+```
+
+## Linux
+
+#### x64
+```sh
+wget https://github.com/timharris777/go-spawn/releases/latest/download/go-spawn-linux-amd64 -O /usr/local/bin/go-spawn && chmod +x /usr/local/bin/go-spawn
+```
+#### Arm
+```sh
+wget https://github.com/timharris777/go-spawn/releases/latest/download/go-spawn-linux-arm64 -O /usr/local/bin/go-spawn && chmod +x /usr/local/bin/go-spawn
+```
+
+## Windows
+
+Go to `https://github.com/timharris777/go-spawn/releases/latest` and download the appropriate `exe` file.
 
 ## Use
 
