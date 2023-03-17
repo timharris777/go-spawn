@@ -18,6 +18,7 @@ builds:
         -X github.com/timharris777/go-spawn/internal/version.builtBy=goreleaser
     no_unique_dist_dir: true
 archives:
-- format: binary # disable archives
+- name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+  format: binary # disable archives
 release:
   prerelease: auto
