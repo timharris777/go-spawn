@@ -70,27 +70,27 @@ func GetYamlContentFromFile(file string) (map[string]interface{}, error) {
 	}
 
 	// Map to store the parsed YAML data
-	var dataDocs []map[string]interface{}
+	// var dataDocs []map[string]interface{}
 	var data map[string]interface{}
 
 	// Unmarshal the YAML data into the struct
-	// err = yaml.Unmarshal(rawyaml, &data)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return nil, err
-	// }
-	if err := UnmarshalAllYamlDocs(rawyaml, &dataDocs); err != nil {
+	err = yaml.Unmarshal(rawyaml, &data)
+	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
-	for _, doc := range dataDocs {
-		variables, ok := doc["variables"].(map[string]interface{})
-		if ok {
-			log.Debug("Found variables: ", variables)
-			return doc, nil
-		}
-		data = doc
-	}
+	// if err := UnmarshalAllYamlDocs(rawyaml, &dataDocs); err != nil {
+	// 	fmt.Println(err)
+	// 	return nil, err
+	// }
+	// for _, doc := range dataDocs {
+	// 	variables, ok := doc["variables"].(map[string]interface{})
+	// 	if ok {
+	// 		log.Debug("Found variables: ", variables)
+	// 		return doc, nil
+	// 	}
+	// 	data = doc
+	// }
 	return data, nil
 }
 
@@ -171,7 +171,7 @@ func FlagValidation(inputFilePath string, inputPipe bool, templatePath string, t
 
 func GetInput(file string, pipeFlag bool) (map[string]interface{}, error) {
 	var yamlData map[string]interface{}
-	var inputDataOriginal map[string]interface{}
+	// var inputDataOriginal map[string]interface{}
 	var inputDataFromIncludes map[string]interface{}
 	var inputDataFinal map[string]interface{}
 	var includeFiles []any
@@ -199,20 +199,21 @@ func GetInput(file string, pipeFlag bool) (map[string]interface{}, error) {
 	log.Debug("yamlData: ", yamlData)
 	// includeFiles, ok := yamlData["includes"].([]any)
 	// if !ok {
-	includeFiles, ok := yamlData["variableFiles"].([]any)
+	includeFiles, ok := yamlData["includes"].([]any)
 	if !ok {
 		includeFiles = make([]any, 0, 0)
 	}
 	// }
 	// inputDataOriginal, ok = yamlData["data"].(map[string]interface{})
 	// if !ok {
-	inputDataOriginal, ok = yamlData["variables"].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("Cannot find ['variables'] key in root of input yaml file.")
-	}
+	// inputDataOriginal, ok = yamlData["variables"].(map[string]interface{})
+	// if !ok {
+	// 	return nil, fmt.Errorf("Cannot find ['variables'] key in root of input yaml file.")
+	// }
 	// }
 	inputDataFromIncludes, err = GetIncludes(includeFiles)
-	inputDataFinal = MergeMaps(inputDataFromIncludes, inputDataOriginal)
+	inputDataFinal = MergeMaps(inputDataFromIncludes, yamlData)
+	log.Debug("inputDataFinal: ", inputDataFinal)
 	return inputDataFinal, nil
 }
 
@@ -270,7 +271,7 @@ func GetIncludes(inputFiles []any) (map[string]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		tmpData = MergeMaps(data_chunk["variables"].(map[string]interface{}), tmpData)
+		tmpData = MergeMaps(data_chunk, tmpData)
 		// TODO: Possibly support includes within includes
 	}
 	log.Debug("Returning merged map of includes: ", tmpData)
@@ -284,7 +285,7 @@ func MergeMaps(a, b map[string]interface{}) map[string]interface{} {
 	}
 	for k, v := range b {
 		if v, ok := v.(map[string]interface{}); ok {
-			fmt.Println(k + " is a map")
+			// fmt.Println(k + " is a map")
 			if bv, ok := out[k]; ok {
 				if bv, ok := bv.(map[string]interface{}); ok {
 					out[k] = MergeMaps(bv, v)
