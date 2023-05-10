@@ -5,8 +5,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"syscall"
 
@@ -62,10 +64,9 @@ var dataDocs []map[string]interface{}
 
 func GetYamlContentFromFile(file string) (map[string]interface{}, error) {
 	// Read the file
-	log.Debug("Reading file: ", file)
-	rawyaml, err := ioutil.ReadFile(file)
+
+	rawyaml, err := getFileContents(file)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -79,18 +80,7 @@ func GetYamlContentFromFile(file string) (map[string]interface{}, error) {
 		fmt.Println(err)
 		return nil, err
 	}
-	// if err := UnmarshalAllYamlDocs(rawyaml, &dataDocs); err != nil {
-	// 	fmt.Println(err)
-	// 	return nil, err
-	// }
-	// for _, doc := range dataDocs {
-	// 	variables, ok := doc["variables"].(map[string]interface{})
-	// 	if ok {
-	// 		log.Debug("Found variables: ", variables)
-	// 		return doc, nil
-	// 	}
-	// 	data = doc
-	// }
+
 	return data, nil
 }
 
@@ -99,12 +89,6 @@ func GetYamlContentFromString(content string) (map[string]interface{}, error) {
 	var dataDocs []map[string]interface{}
 	var data map[string]interface{}
 
-	// // Unmarshal the YAML data into the struct
-	// err := yaml.Unmarshal([]byte(content), &data)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return nil, err
-	// }
 	if err := UnmarshalAllYamlDocs([]byte(content), &dataDocs); err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -169,69 +153,68 @@ func FlagValidation(inputFilePath string, inputPipe bool, templatePath string, t
 	return nil
 }
 
-func GetInput(file string, pipeFlag bool) (map[string]interface{}, error) {
+func GetInput(file string, pipeFlag bool, printInputFlag bool) (map[string]interface{}, error) {
 	var yamlData map[string]interface{}
 	// var inputDataOriginal map[string]interface{}
 	var inputDataFromIncludes map[string]interface{}
-	var inputDataFinal map[string]interface{}
-	var includeFiles []any
+	var inputData map[string]interface{}
+	var includeFiles []interface{}
 	var content string
 	var err error
 
 	if pipeFlag {
-		// Read the file
+		// Get text
+		log.Debug("Getting input from pipe")
 		content, err = GetPipedContent()
 		if err != nil {
 			return nil, err
 		}
-		// Read the file
-		yamlData, err = GetYamlContentFromString(content)
-		if err != nil {
-			return nil, err
-		}
 	} else {
-		// Read the file
-		yamlData, err = GetYamlContentFromFile(file)
+		// Get text
+		log.Debug("Getting input from file")
+		content, err = getFileContentsAsString(file)
 		if err != nil {
 			return nil, err
 		}
 	}
-	log.Debug("yamlData: ", yamlData)
-	// includeFiles, ok := yamlData["includes"].([]any)
-	// if !ok {
-	includeFiles, ok := yamlData["includes"].([]any)
-	if !ok {
-		includeFiles = make([]any, 0, 0)
+	// Read the file
+	yamlData, err = GetYamlContentFromString(content)
+	if err != nil {
+		return nil, err
 	}
-	// }
-	// inputDataOriginal, ok = yamlData["data"].(map[string]interface{})
-	// if !ok {
-	// inputDataOriginal, ok = yamlData["variables"].(map[string]interface{})
-	// if !ok {
-	// 	return nil, fmt.Errorf("Cannot find ['variables'] key in root of input yaml file.")
-	// }
-	// }
+	includeFiles, ok := yamlData["includes"].([]interface{})
+	if !ok {
+		includeFiles = make([]interface{}, 0, 0)
+	}
 	inputDataFromIncludes, err = GetIncludes(includeFiles)
-	inputDataFinal = MergeMaps(inputDataFromIncludes, yamlData)
-	log.Debug("inputDataFinal: ", inputDataFinal)
-	return inputDataFinal, nil
+	delete(yamlData, "includes")
+	inputData = MergeMaps(inputDataFromIncludes, yamlData)
+	inputText, inputData, err := RenderInput(inputData)
+	if printInputFlag {
+		fmt.Printf(inputText)
+		os.Exit(0)
+	} else {
+		log.Debug("--- InputData Start --- \n", inputText)
+		log.Debug("--- InputData End --- ")
+	}
+	return inputData, nil
 }
 
 func GetTemplate(file string, pipeFlag bool) (string, error) {
-	var contentRaw []byte
 	var content string
 	var err error
 
 	if pipeFlag {
 		// Read the file
+		log.Debug("Getting template from pipe")
 		content, err = GetPipedContent()
 		if err != nil {
 			return "", err
 		}
 	} else {
 		// Read the file
-		contentRaw, err = os.ReadFile(file)
-		content = string(contentRaw)
+		log.Debug("Getting template from file")
+		content, err = getFileContentsAsString(file)
 		if err != nil {
 			return "", err
 		}
@@ -239,6 +222,24 @@ func GetTemplate(file string, pipeFlag bool) (string, error) {
 
 	return content, nil
 
+}
+
+func getFileContents(file string) ([]byte, error) {
+	log.Debug("Reading file: ", file)
+	contentBytes, err := os.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	return contentBytes, nil
+}
+
+func getFileContentsAsString(file string) (string, error) {
+	contentBytes, err := getFileContents(file)
+	if err != nil {
+		return "", err
+	}
+	content := string(contentBytes)
+	return content, nil
 }
 
 func RenderTemplate(template string, input map[string]any) (string, error) {
@@ -261,20 +262,40 @@ func RenderTemplate(template string, input map[string]any) (string, error) {
 
 }
 
-func GetIncludes(inputFiles []any) (map[string]interface{}, error) {
+func GetIncludes(inputFiles []interface{}) (map[string]interface{}, error) {
 	var tmpData map[string]interface{}
-	for fileIndex := range inputFiles {
-		file := inputFiles[fileIndex].(string)
-		log.Debug("Getting includes for input: ", file)
+	var file string
+	for _, include := range inputFiles {
+		log.Debug("Processing includes...")
+		include, ok := include.(map[string]interface{})
+		if !ok {
+			log.Debug("not ok")
+		}
+		filePath := include["path"].(string)
+		fileBase := include["base"].(string)
+		if fileBase == "currentDirectory" {
+			currentDir, err := os.Getwd()
+			if err != nil {
+				return nil, err
+			}
+			file = filepath.Join(currentDir, filePath)
+		} else if fileBase == "repositoryRoot" {
+			repoRoot, err := getRepoRoot()
+			if err != nil {
+				return nil, err
+			}
+			file = filepath.Join(strings.TrimSpace(repoRoot), filePath)
+		} else {
+			log.Error("[base] value must be 'repositoryRoot' or 'currentDirectory'")
+			os.Exit(1)
+		}
 		data_chunk, err := GetYamlContentFromFile(file)
-		log.Debug("Include file contents: ", data_chunk)
 		if err != nil {
 			return nil, err
 		}
 		tmpData = MergeMaps(data_chunk, tmpData)
 		// TODO: Possibly support includes within includes
 	}
-	log.Debug("Returning merged map of includes: ", tmpData)
 	return tmpData, nil
 }
 
@@ -296,4 +317,40 @@ func MergeMaps(a, b map[string]interface{}) map[string]interface{} {
 		out[k] = v
 	}
 	return out
+}
+
+func RenderInput(input map[string]interface{}) (string, map[string]interface{}, error) {
+	tmp, err := yaml.Marshal(input)
+	if err != nil {
+		return "", nil, err
+	}
+	inputText := string(tmp)
+	inputData, err := GetYamlContentFromString(inputText)
+	count := 1
+	for isTemplated(inputText) {
+		log.Debug("Processing input as template... " + fmt.Sprint(count) + " pass")
+		inputText, err = RenderTemplate(inputText, inputData)
+		inputData, err = GetYamlContentFromString(inputText)
+		count++
+	}
+	return inputText, inputData, nil
+}
+
+func getRepoRoot() (string, error) {
+	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
+func isTemplated(template string) bool {
+	r := regexp.MustCompile(`{{(.*?)}}`)
+	results := r.FindAllStringSubmatch(template, -1)
+	if len(results) > 0 {
+		return true
+	} else {
+		return false
+	}
 }

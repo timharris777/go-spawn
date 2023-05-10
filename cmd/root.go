@@ -20,6 +20,7 @@ var templatePipe bool
 var outputPath string
 var debug bool
 var versionFlag bool
+var printInputFlag bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -38,21 +39,25 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Validate proper flag usage
+		log.Debug("Validating flags...")
 		err := utils.FlagValidation(inputFilePath, inputPipe, templatePath, templatePipe, outputPath)
 		if err != nil {
 			panic(err)
 		}
+		// Get input data
+		log.Debug("Processing input...")
+		input, err := utils.GetInput(inputFilePath, inputPipe, printInputFlag)
+		if err != nil {
+			panic(err)
+		}
 		// Get template string
+		log.Debug("Processing template...")
 		template, err := utils.GetTemplate(templatePath, templatePipe)
 		if err != nil {
 			panic(err)
 		}
-		// Get input data
-		input, err := utils.GetInput(inputFilePath, inputPipe)
-		if err != nil {
-			panic(err)
-		}
 		// Render template with input
+		log.Debug("Rendering final template...")
 		rendered, err := utils.RenderTemplate(template, input)
 		// Print rendered output
 		fmt.Printf(rendered)
@@ -82,4 +87,5 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&outputPath, "output", "o", "", "folder to output rendered templates")
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "folder to output rendered templates")
 	rootCmd.PersistentFlags().BoolVarP(&versionFlag, "version", "v", false, "print the current version of go-spawn")
+	rootCmd.PersistentFlags().BoolVarP(&printInputFlag, "printInput", "", false, "print all values that are available for templating based on given input")
 }
