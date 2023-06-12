@@ -133,6 +133,7 @@ func GetPipedContent() (string, error) {
 		if err := scanner.Err(); err != nil {
 			return "", err
 		}
+		log.Debug(template)
 	} else {
 		// TODO: Clean this up
 		fmt.Print("Enter your name: ")
@@ -250,7 +251,37 @@ func RenderTemplate(template string, input map[string]any) (string, error) {
 
 	// Now you can render the template with the given
 	// pongo2.Context how often you want to.
-	context := make(pongo2.Context)
+	context := pongo2.Context{
+		"printMapAsYamlString": func(a map[string]interface{}, defaultIndentSpacing int) string {
+
+			yamlBytes, err := encodeYaml(a, defaultIndentSpacing) // Returns "b: 2\n"
+			if err != nil {
+				return fmt.Sprintln("error: help!")
+			}
+
+			return string(yamlBytes)
+		},
+		"indentYaml": func(text string, spaces int) string {
+			var final string
+
+			var pad string
+			for i := 0; i < spaces; i++ {
+				pad += " "
+			}
+			scanner := bufio.NewScanner(strings.NewReader(text))
+			for scanner.Scan() {
+				text := scanner.Text()
+				log.Debug(text)
+				if strings.HasPrefix(text, "- ") {
+					final += fmt.Sprintln(text)
+				} else {
+					final += fmt.Sprintln(pad + text)
+				}
+			}
+			return fmt.Sprint(final)
+
+		},
+	}
 	context.Update(input)
 	out, err := tpl.Execute(context)
 	if err != nil {
@@ -353,4 +384,16 @@ func isTemplated(template string) bool {
 	} else {
 		return false
 	}
+}
+
+func encodeYaml(r map[string]interface{}, spaces int) ([]byte, error) {
+	var b bytes.Buffer
+	e := yaml.NewEncoder(&b)
+	e.SetIndent(spaces)
+
+	if err := e.Encode(&r); err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
+
 }
