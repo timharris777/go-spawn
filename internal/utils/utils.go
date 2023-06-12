@@ -14,11 +14,17 @@ import (
 
 	"github.com/flosch/pongo2/v6"
 	log "github.com/sirupsen/logrus"
+	"github.com/timharris777/go-spawn/internal/filters"
 	"golang.org/x/term"
 	"gopkg.in/yaml.v3"
 )
 
+func init() {
+	filters.Init()
+}
+
 func YesNoPrompt(label string, def bool) bool {
+	// filters
 	choices := "Y/n"
 	if !def {
 		choices = "y/N"
@@ -252,15 +258,6 @@ func RenderTemplate(template string, input map[string]any) (string, error) {
 	// Now you can render the template with the given
 	// pongo2.Context how often you want to.
 	context := pongo2.Context{
-		"printMapAsYamlString": func(a map[string]interface{}, defaultIndentSpacing int) string {
-
-			yamlBytes, err := encodeYaml(a, defaultIndentSpacing) // Returns "b: 2\n"
-			if err != nil {
-				return fmt.Sprintln("error: help!")
-			}
-
-			return string(yamlBytes)
-		},
 		"indentYaml": func(text string, spaces int) string {
 			var final string
 
@@ -279,7 +276,6 @@ func RenderTemplate(template string, input map[string]any) (string, error) {
 				}
 			}
 			return fmt.Sprint(final)
-
 		},
 	}
 	context.Update(input)
@@ -384,16 +380,4 @@ func isTemplated(template string) bool {
 	} else {
 		return false
 	}
-}
-
-func encodeYaml(r map[string]interface{}, spaces int) ([]byte, error) {
-	var b bytes.Buffer
-	e := yaml.NewEncoder(&b)
-	e.SetIndent(spaces)
-
-	if err := e.Encode(&r); err != nil {
-		return nil, err
-	}
-	return b.Bytes(), nil
-
 }
