@@ -61,17 +61,17 @@ Flags:
 
 ### A basic use case
 ```sh
-Coming soon...
+go-spawn -t './resources/service.yaml' --input "./inputs.yaml"
 ```
 ### Render by piping template and providing input directly
 ```sh
-Coming soon...
+kustomize build . | go-spawn --templateFromPipe --input "inputs.yaml"
 ```
 ### Render by piping input and providing template directly
 ```sh
-Coming soon...
+cat inputs.yaml | go-spawn -t './resources/service.yaml' --inputFromPipe
 ```
 ### Render a template directory
 ```sh
-Coming soon...
+Support coming soon...
 ```
